@@ -1,0 +1,48 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Ticket {
+  id          String    @id @default(cuid())
+  ticketNo    String    @unique
+  title       String
+  description String
+  status      String    @default("OPEN")
+  priority    String    @default("MEDIUM")
+  category    String
+  submittedBy String
+  assignedTo  String?
+  department  String?
+  dueDate     DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  comments    Comment[]
+  activities  Activity[]
+}
+
+model Comment {
+  id         String   @id @default(cuid())
+  body       String
+  author     String
+  isInternal Boolean  @default(false)
+  ticketId   String
+  ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+}
+
+model Activity {
+  id        String   @id @default(cuid())
+  action    String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  actor     String
+  ticketId  String
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
