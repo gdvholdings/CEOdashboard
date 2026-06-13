@@ -6,29 +6,69 @@ datasource db {
   provider = "sqlite"
 }
 
+model User {
+  id          String   @id @default(cuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        String   // SUPER_ADMIN | DEPT_HEAD | MEMBER
+  department  String?  // IT | FACILITY | SECURITY | MARKETING | HR_FINANCE
+  mobile      String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  assignedTickets Ticket[]       @relation("AssignedTo")
+  comments        Comment[]
+  activities      Activity[]
+  notifications   Notification[]
+}
+
+model Counter {
+  id    String @id
+  value Int    @default(0)
+}
+
 model Ticket {
-  id          String    @id @default(cuid())
-  ticketNo    String    @unique
-  title       String
-  description String
-  status      String    @default("OPEN")
-  priority    String    @default("MEDIUM")
-  category    String
-  submittedBy String
-  assignedTo  String?
-  department  String?
-  dueDate     DateTime?
-  resolvedAt  DateTime?
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-  comments    Comment[]
-  activities  Activity[]
+  id              String    @id @default(cuid())
+  ticketNo        String    @unique
+
+  submitterName   String
+  submitterEmail  String
+  submitterMobile String?
+
+  department      String
+  priority        String
+  issueType       String
+  issueTypeOther  String?
+  issueTitle      String
+  location        String
+  description     String
+
+  status          String    @default("OPEN")
+
+  assignedToId    String?
+  assignedTo      User?     @relation("AssignedTo", fields: [assignedToId], references: [id])
+
+  slaDeadline     DateTime?
+  customDeadline  DateTime?
+  overdueNotified Boolean   @default(false)
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  comments        Comment[]
+  activities      Activity[]
+  notifications   Notification[]
 }
 
 model Comment {
   id         String   @id @default(cuid())
   body       String
-  author     String
+  authorId   String
+  author     User     @relation(fields: [authorId], references: [id])
   isInternal Boolean  @default(false)
   ticketId   String
   ticket     Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
@@ -41,8 +81,23 @@ model Activity {
   field     String?
   oldValue  String?
   newValue  String?
-  actor     String
+  actorId   String?
+  actor     User?    @relation(fields: [actorId], references: [id])
+  actorName String
   ticketId  String
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  type      String
+  title     String
+  message   String
+  isRead    Boolean  @default(false)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ticketId  String?
+  ticket    Ticket?  @relation(fields: [ticketId], references: [id], onDelete: Cascade)
   createdAt DateTime @default(now())
 }
